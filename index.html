@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Election Vote Counter</title>
+    <title>ALC Carmel PC Election Vote Counter</title>
     <style>
         body {
             font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -106,7 +106,7 @@
     </style>
 </head>
 <body>
-    <h1>Election Vote Counter</h1>
+    <h1>ALC Carmel PC Election Vote Counter</h1>
     <div class="instructions">
         Select up to 8 main candidates and 2 substitute candidates. You may choose fewer or none, but at least one selection is required to submit.
     </div>
@@ -120,15 +120,20 @@
 
     <script>
         // Define candidates
-        const mainCandidates = [
-            "Alice Smith", "Bob Johnson", "Carol Williams", "David Brown",
-            "Emma Jones", "Frank Garcia", "Grace Martinez", "Henry Wilson",
-            "Isabella Davis", "James Rodriguez", "Kelly Thomas", "Liam Anderson",
-            "Mia Taylor", "Noah White", "Olivia Clark", "Peter Lewis",
-            "Quinn Walker", "Rachel Young"
+       const mainCandidates = [
+         // List of 18 candidates
+            "1. Abraham Bose Kennedy", "2. Anand Asir S. ", "3. Anand Baskaran R. ", "4. Getzi Shinola I. ",
+            "5. Hubert Dhanasundaram B.", "6. Jacob Ebenezer V. ", "7. James Rajkumar S. ", "8. Jayachandran J. ",
+            "9. Jayaraj J. ", "10. Jayaraj Samuel Y. ", "11. Jensi Devasena V. ", "12. John Kingsley K. ",
+            "13. Kumar Jayaprakash C.K. ", "14. Paul Pravin Kumar J. ", "15. Poonguzhali Portramarai S. ", "16. Rajkumar Thambu R. ", "17. Rajesh Kumar E. ", 
+            "18. Selvi Mary Latha S. A. ", "19.  Yesu Devadoss M. " 
+            
+        
         ];
+
+        // List of 4 substitute candidates
         const substituteCandidates = [
-            "Sam Green", "Tina Adams", "Victor Bell", "Wendy Carter"
+         "1. Alice Vinoliya","2. Dhiljith Raj", "3. Jebaselvi J.", "4. Julius Rajan R."
         ];
         const allCandidates = [...mainCandidates, ...substituteCandidates];
 
