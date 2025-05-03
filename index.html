@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Election Vote Counter</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(to bottom, #e0f7fa, #ffffff);
+        }
+        h1 {
+            text-align: center;
+            color: #1a237e;
+            font-size: 2em;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #0d47a1;
+            font-size: 1.5em;
+            margin: 20px 0 10px;
+        }
+        .instructions {
+            text-align: center;
+            color: #424242;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .candidate-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .candidate {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+        .candidate:hover {
+            transform: translateY(-5px);
+        }
+        .candidate h3 {
+            margin: 0 0 12px;
+            font-size: 1.3em;
+            color: #0d47a1;
+            font-weight: 600;
+        }
+        .candidate p {
+            margin: 5px 0;
+            color: #424242;
+            font-size: 1.1em;
+        }
+        .candidate input[type="checkbox"] {
+            margin-top: 10px;
+            transform: scale(1.5);
+            cursor: pointer;
+        }
+        .submit-btn, .reset-btn {
+            display: inline-block;
+            margin: 20px 10px;
+            background: #0288d1;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1.2em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s, box-shadow 0.2s;
+        }
+        .reset-btn {
+            background: #d32f2f;
+        }
+        .submit-btn:hover, .reset-btn:hover {
+            background: #0277bd;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .reset-btn:hover {
+            background: #b71c1c;
+        }
+        .submit-btn:active, .reset-btn:active {
+            transform: scale(0.95);
+        }
+        #total-votes {
+            text-align: center;
+            font-size: 1.3em;
+            color: #1a237e;
+            margin-top: 25px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <h1>Election Vote Counter</h1>
+    <div class="instructions">
+        Select up to 8 main candidates and 2 substitute candidates. You may choose fewer or none, but at least one selection is required to submit.
+    </div>
+    <h2>Main Candidates</h2>
+    <div class="candidate-list" id="main-candidate-list"></div>
+    <h2>Substitute Candidates</h2>
+    <div class="candidate-list" id="substitute-candidate-list"></div>
+    <button class="submit-btn" onclick="submitVotes()">Submit Votes</button>
+    <button class="reset-btn" onclick="resetVotes()">Reset All Votes</button>
+    <div id="total-votes">Total Submitted Votes: 0<br>Total Candidate Votes: 0</div>
+
+    <script>
+        // Define candidates
+        const mainCandidates = [
+            "Alice Smith", "Bob Johnson", "Carol Williams", "David Brown",
+            "Emma Jones", "Frank Garcia", "Grace Martinez", "Henry Wilson",
+            "Isabella Davis", "James Rodriguez", "Kelly Thomas", "Liam Anderson",
+            "Mia Taylor", "Noah White", "Olivia Clark", "Peter Lewis",
+            "Quinn Walker", "Rachel Young"
+        ];
+        const substituteCandidates = [
+            "Sam Green", "Tina Adams", "Victor Bell", "Wendy Carter"
+        ];
+        const allCandidates = [...mainCandidates, ...substituteCandidates];
+
+        // Initialize data from localStorage or defaults
+        let votes = JSON.parse(localStorage.getItem('votes')) || new Array(allCandidates.length).fill(0);
+        let totalSubmittedVotes = parseInt(localStorage.getItem('totalSubmittedVotes')) || 0;
+        let totalCandidateVotes = parseInt(localStorage.getItem('totalCandidateVotes')) || 0;
+
+        // Get DOM elements
+        const mainCandidateList = document.getElementById('main-candidate-list');
+        const substituteCandidateList = document.getElementById('substitute-candidate-list');
+        const totalVotesDisplay = document.getElementById('total-votes');
+
+        // Save data to localStorage
+        function saveToLocalStorage() {
+            localStorage.setItem('votes', JSON.stringify(votes));
+            localStorage.setItem('totalSubmittedVotes', totalSubmittedVotes);
+            localStorage.setItem('totalCandidateVotes', totalCandidateVotes);
+        }
+
+        // Render candidates
+        function renderCandidates() {
+            mainCandidateList.innerHTML = '';
+            substituteCandidateList.innerHTML = '';
+
+            // Render main candidates
+            mainCandidates.forEach((candidate, index) => {
+                const candidateDiv = document.createElement('div');
+                candidateDiv.className = 'candidate';
+                candidateDiv.innerHTML = `
+                    <h3>${candidate}</h3>
+                    <p>Votes: ${votes[index]}</p>
+                    <input type="checkbox" id="candidate-${index}" onchange="toggleSelection(${index})">
+                `;
+                mainCandidateList.appendChild(candidateDiv);
+            });
+
+            // Render substitute candidates
+            substituteCandidates.forEach((candidate, index) => {
+                const globalIndex = mainCandidates.length + index; // Offset for substitute candidates
+                const candidateDiv = document.createElement('div');
+                candidateDiv.className = 'candidate';
+                candidateDiv.innerHTML = `
+                    <h3>${candidate}</h3>
+                    <p>Votes: ${votes[globalIndex]}</p>
+                    <input type="checkbox" id="candidate-${globalIndex}" onchange="toggleSelection(${globalIndex})">
+                `;
+                substituteCandidateList.appendChild(candidateDiv);
+            });
+
+            totalVotesDisplay.innerHTML = `Total Submitted Votes: ${totalSubmittedVotes}<br>Total Candidate Votes: ${totalCandidateVotes}`;
+        }
+
+        // Track selected candidates
+        let selectedCandidates = new Array(allCandidates.length).fill(false);
+
+        // Toggle selection
+        function toggleSelection(index) {
+            selectedCandidates[index] = !selectedCandidates[index];
+        }
+
+        // Submit votes
+        function submitVotes() {
+            // Count selected main and substitute candidates
+            let mainCount = 0;
+            let substituteCount = 0;
+            selectedCandidates.forEach((selected, index) => {
+                if (selected) {
+                    if"], index < mainCandidates.length) mainCount++;
+                    else substituteCount++;
+                }
+            });
+
+            // Validate selections
+            if (mainCount > 8) {
+                alert('Error: You can select up to 8 main candidates.');
+                return;
+            }
+            if (substituteCount > 2) {
+                alert('Error: You can select up to 2 substitute candidates.');
+                return;
+            }
+            if (mainCount === 0 && substituteCount === 0) {
+                alert('Error: Please select at least one main or substitute candidate.');
+                return;
+            }
+
+            // Update votes
+            selectedCandidates.forEach((selected, index) => {
+                if (selected) {
+                    votes[index]++;
+                    totalCandidateVotes++;
+                }
+            });
+            totalSubmittedVotes++;
+
+            // Save to localStorage
+            saveToLocalStorage();
+
+            // Reset selections
+            selectedCandidates.fill(false);
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+
+            // Success message
+            alert(`Votes submitted successfully! Selected ${mainCount} main and ${substituteCount} substitute candidates.`);
+
+            // Re-render
+            renderCandidates();
+        }
+
+        // Reset all votes
+        function resetVotes() {
+            if (confirm('Are you sure you want to reset all votes? This cannot be undone.')) {
+                votes.fill(0);
+                totalSubmittedVotes = 0;
+                totalCandidateVotes = 0;
+                selectedCandidates.fill(false);
+                document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                saveToLocalStorage();
+                renderCandidates();
+                alert('All votes have been reset.');
+            }
+        }
+
+        // Initial render
+        renderCandidates();
+    </script>
+</body>
+</html>
