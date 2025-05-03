@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Election Vote Counter</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(to bottom, #e0f7fa, #ffffff);
+        }
+        h1 {
+            text-align: center;
+            color: #1a237e;
+            font-size: 2em;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        .candidate-list, .substitute-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .candidate, .substitute {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+        .candidate:hover, .substitute:hover {
+            transform: translateY(-5px);
+        }
+        .candidate h3, .substitute h3 {
+            margin: 0 0 12px;
+            font-size: 1.3em;
+            color: #0d47a1;
+            font-weight: 600;
+        }
+        .candidate p, .substitute p {
+            margin: 5px 0;
+            color: #424242;
+            font-size: 1.1em;
+        }
+        .vote-btn {
+            background: #0288d1;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: background 0.3s, box-shadow 0.2s;
+        }
+        .vote-btn:hover {
+            background: #0277bd;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .vote-btn:active {
+            transform: scale(0.95);
+        }
+        .remove-vote-btn {
+            background: #d32f2f;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: background 0.3s, box-shadow 0.2s;
+            margin-top: 8px;
+        }
+        .remove-vote-btn:hover:not(:disabled) {
+            background: #b71c1c;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .remove-vote-btn:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+        .remove-vote-btn:disabled {
+            background: #bdbdbd;
+            cursor: not-allowed;
+        }
+        #total-votes {
+            text-align: center;
+            font-size: 1.3em;
+            color: #1a237e;
+            margin-top: 25px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            font-weight: 500;
+        }
+        h2 {
+            color: #1a237e;
+            font-size: 1.5em;
+            margin: 20px 0 15px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Election Vote Counter</h1>
+    <h2>Main Candidates</h2>
+    <div class="candidate-list" id="candidate-list"></div>
+    <h2>Substitute Candidates</h2>
+    <div class="substitute-list" id="substitute-list"></div>
+    <div id="total-votes">Total Votes Counted: 0</div>
+
+    <script>
+        // List of 18 main candidates
+        const mainCandidates = [
+            "Alice Smith", "Bob Johnson", "Carol Williams", "David Brown",
+            "Emma Jones", "Frank Garcia", "Grace Martinez", "Henry Wilson",
+            "Isabella Davis", "James Rodriguez", "Kelly Thomas", "Liam Anderson",
+            "Mia Taylor", "Noah White", "Olivia Clark", "Peter Lewis",
+            "Quinn Walker", "Rachel Young"
+        ];
+
+        // List of 4 substitute candidates
+        const substituteCandidates = [
+            "Sophie Green", "Thomas Lee", "Victoria Adams", "William Carter"
+        ];
+
+        // Initialize vote counts
+        let mainVotes = loadFromLocalStorage('mainVotes') || new Array(mainCandidates.length).fill(0);
+        let substituteVotes = loadFromLocalStorage('substituteVotes') || new Array(substituteCandidates.length).fill(0);
+        let totalVotes = loadFromLocalStorage('totalVotes') || 0;
+
+        // Get DOM elements
+        const candidateList = document.getElementById('candidate-list');
+        const substituteList = document.getElementById('substitute-list');
+        const totalVotesDisplay = document.getElementById('total-votes');
+
+        // Load data from local storage
+        function loadFromLocalStorage(key) {
+            const data = localStorage.getItem(key);
+            return data ? JSON.parse(data) : null;
+        }
+
+        // Save data to local storage
+        function saveToLocalStorage() {
+            localStorage.setItem('mainVotes', JSON.stringify(mainVotes));
+            localStorage.setItem('substituteVotes', JSON.stringify(substituteVotes));
+            localStorage.setItem('totalVotes', JSON.stringify(totalVotes));
+        }
+
+        // Render main candidates
+        function renderMainCandidates() {
+            candidateList.innerHTML = '';
+            mainCandidates.forEach((candidate, index) => {
+                const candidateDiv = document.createElement('div');
+                candidateDiv.className = 'candidate';
+                candidateDiv.innerHTML = `
+                    <h3>${candidate}</h3>
+                    <p>Votes: ${mainVotes[index]}</p>
+                    <button class="vote-btn" onclick="addMainVote(${index})">Add Vote</button>
+                    <button class="remove-vote-btn" onclick="removeMainVote(${index})" ${mainVotes[index] === 0 ? 'disabled' : ''}>Remove Vote</button>
+                `;
+                candidateList.appendChild(candidateDiv);
+            });
+        }
+
+        // Render substitute candidates
+        function renderSubstituteCandidates() {
+            substituteList.innerHTML = '';
+            substituteCandidates.forEach((candidate, index) => {
+                const candidateDiv = document.createElement('div');
+                candidateDiv.className = 'substitute';
+                candidateDiv.innerHTML = `
+                    <h3>${candidate}</h3>
+                    <p>Votes: ${substituteVotes[index]}</p>
+                    <button class="vote-btn" onclick="addSubstituteVote(${index})">Add Vote</button>
+                    <button class="remove-vote-btn" onclick="removeSubstituteVote(${index})" ${substituteVotes[index] === 0 ? 'disabled' : ''}>Remove Vote</button>
+                `;
+                substituteList.appendChild(candidateDiv);
+            });
+        }
+
+        // Add vote for main candidate
+        function addMainVote(index) {
+            mainVotes[index]++;
+            totalVotes++;
+            saveToLocalStorage();
+            renderMainCandidates();
+            updateTotalVotes();
+        }
+
+        // Remove vote for main candidate
+        function removeMainVote(index) {
+            if (mainVotes[index] > 0) {
+                mainVotes[index]--;
+                totalVotes--;
+                saveToLocalStorage();
+                renderMainCandidates();
+                updateTotalVotes();
+            }
+        }
+
+        // Add vote for substitute candidate
+        function addSubstituteVote(index) {
+            substituteVotes[index]++;
+            totalVotes++;
+            saveToLocalStorage();
+            renderSubstituteCandidates();
+            updateTotalVotes();
+        }
+
+        // Remove vote for substitute candidate
+        function removeSubstituteVote(index) {
+            if (substituteVotes[index] > 0) {
+                substituteVotes[index]--;
+                totalVotes--;
+                saveToLocalStorage();
+                renderSubstituteCandidates();
+                updateTotalVotes();
+            }
+        }
+
+        // Update total votes display
+        function updateTotalVotes() {
+            totalVotesDisplay.textContent = `Total Votes Counted: ${totalVotes}`;
+        }
+
+        // Initial render
+        renderMainCandidates();
+        renderSubstituteCandidates();
+        updateTotalVotes();
+    </script>
+</body>
+</html>
