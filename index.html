@@ -83,9 +83,8 @@
     <h1>Election Vote Counter</h1>
     <div class="candidate-list" id="candidate-list"></div>
     <div id="total-votes">Total Votes Counted: 0</div>
-
-    <script>
-        // List of 18 candidates
+<script>
+    // List of 18 candidates
         const candidates = [
             "1. Abraham Bose Kennedy", "2. Anand Asir S. ", "3. Anand Baskaran R. ", "4. Getzi Shinola I. ",
             "5. Hubert Dhanasundaram B.", "6. Jacob Ebenezer V. ", "7. James Rajkumar S. ", "8. Jayachandran J. ",
@@ -95,39 +94,50 @@
             
         ];
 
-        // Initialize vote counts
-        let votes = new Array(candidates.length).fill(0);
-        let totalVotes = 0;
+    // Initialize vote counts
+    let votes = new Array(candidates.length).fill(0);
+    let totalVotes = 0;
 
-        // Get DOM elements
-        const candidateList = document.getElementById('candidate-list');
-        const totalVotesDisplay = document.getElementById('total-votes');
+    // Get DOM elements
+    const candidateList = document.getElementById('candidate-list');
+    const totalVotesDisplay = document.getElementById('total-votes');
 
-        // Render candidates
-        function renderCandidates() {
-            candidateList.innerHTML = '';
-            candidates.forEach((candidate, index) => {
-                const candidateDiv = document.createElement('div');
-                candidateDiv.className = 'candidate';
-                candidateDiv.innerHTML = `
-                    <h3>${candidate}</h3>
-                    <p>Votes: ${votes[index]}</p>
-                    <button class="vote-btn" onclick="addVote(${index})">Add Vote</button>
-                `;
-                candidateList.appendChild(candidateDiv);
-            });
-            totalVotesDisplay.textContent = `Total Votes Counted: ${totalVotes}`;
-        }
+    // Render candidates
+    function renderCandidates() {
+        candidateList.innerHTML = '';
+        candidates.forEach((candidate, index) => {
+            const candidateDiv = document.createElement('div');
+            candidateDiv.className = 'candidate';
+            candidateDiv.innerHTML = `
+                <h3>${candidate}</h3>
+                <p>Votes: ${votes[index]}</p>
+                <button class="vote-btn" onclick="addVote(${index})">Add Vote</button>
+                <button class="remove-vote-btn" onclick="removeVote(${index})" ${votes[index] === 0 ? 'disabled' : ''}>Remove Vote</button>
+            `;
+            candidateList.appendChild(candidateDiv);
+        });
+        totalVotesDisplay.textContent = `Total Votes Counted: ${totalVotes}`;
+    }
 
-        // Add vote function
-        function addVote(index) {
-            votes[index]++;
-            totalVotes++;
+    // Add vote function
+    function addVote(index) {
+        votes[index]++;
+        totalVotes++;
+        renderCandidates();
+    }
+
+    // Remove vote function
+    function removeVote(index) {
+        if (votes[index] > 0) {
+            votes[index]--;
+            totalVotes--;
             renderCandidates();
         }
+    }
 
-        // Initial render
-        renderCandidates();
-    </script>
+    // Initial render
+    renderCandidates();
+</script>
+
 </body>
 </html>
