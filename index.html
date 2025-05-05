@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal Candidate Selector</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(to bottom, #e0f7fa, #ffffff);
+        }
+        h1 {
+            text-align: center;
+            color: #1a237e;
+            font-size: 2em;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #0d47a1;
+            font-size: 1.5em;
+            margin: 20px 0 10px;
+        }
+        .instructions {
+            text-align: center;
+            color: #424242;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .candidate-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .candidate {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+        .candidate:hover {
+            transform: translateY(-5px);
+        }
+        .candidate h3 {
+            margin: 0 0 12px;
+            font-size: 1.3em;
+            color: #0d47a1;
+            font-weight: 600;
+        }
+        .candidate p {
+            margin: 5px 0;
+            color: #424242;
+            font-size: 1.1em;
+        }
+        .candidate input[type="checkbox"] {
+            margin-top: 10px;
+            transform: scale(1.5);
+            cursor: pointer;
+        }
+        .action-section {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .action-section input[type="text"] {
+            padding: 8px;
+            font-size: 1em;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 200px;
+        }
+        .action-section select {
+            padding: 8px;
+            font-size: 1em;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin: 0 10px;
+        }
+        .submit-btn, .reset-btn, .add-btn, .delete-btn {
+            background: #0288d1;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s, box-shadow 0.2s;
+            margin: 5px;
+        }
+        .reset-btn, .delete-btn {
+            background: #d32f2f;
+        }
+        .submit-btn:hover, .add-btn:hover {
+            background: #0277bd;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .reset-btn:hover, .delete-btn:hover {
+            background: #b71c1c;
+        }
+        .submit [type="submit"]:active, .reset-btn:active, .add-btn:active, .delete-btn:active {
+            transform: scale(0.95);
+        }
+        #total-selected {
+            text-align: center;
+            font-size: 1.3em;
+            color: #1a237e;
+            margin: 20px 0;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .breakdown {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 12px;
+        }
+        .breakdown h3 {
+            margin: 0 0 10px;
+            color: #1a237e;
+        }
+        .breakdown p {
+            margin: 5px 0;
+            color: #424242;
+        }
+    </style>
+</head>
+<body>
+    <h1>Legal Candidate Selector</h1>
+    <div class="instructions">
+        Elected members propose up to 133 legal candidates from the voter pool. Select an elected member, check voters to propose, and submit. Add or delete voters as needed. View the breakdown of proposals by member.
+    </div>
+
+    <h2>Voter Pool</h2>
+    <div class="action-section">
+        <input type="text" id="new-voter" placeholder="Enter voter name">
+        <button class="add-btn" onclick="addVoter()">Add Voter</button>
+    </div>
+    <div class="candidate-list" id="voter-list"></div>
+
+    <h2>Propose Legal Candidates</h2>
+    <div class="action-section">
+        <select id="elected-member">
+            <!-- Populated dynamically -->
+        </select>
+        <button class="submit-btn" onclick="proposeLegalCandidates()">Propose Legal Candidates</button>
+    </div>
+
+    <h2>Selected Legal Candidates</h2>
+    <div id="total-selected">Selected: 0/133</div>
+    <div class="candidate-list" id="legal-candidate-list"></div>
+
+    <h2>Proposal Breakdown</h2>
+    <div class="breakdown" id="proposal-breakdown"></div>
+
+    <div class="action-section">
+        <button class="reset-btn" onclick="resetAll()">Reset All Data</button>
+    </div>
+
+    <script>
+        // Elected members (from previous election)
+        const electedMembers = [
+            "Alice Smith", "Bob Johnson", "Carol Williams", "David Brown",
+            "Emma Jones", "Frank Garcia", "Grace Martinez", "Henry Wilson",
+            "Kelly Thomas", "Liam Anderson" // 8 main + 2 substitutes
+        ];
+
+        // Initial voter pool (sample; can add up to 799)
+        let voters = JSON.parse(localStorage.getItem('voters')) || [
+            "John Doe", "Jane Roe", "Michael Chen", "Sarah Lee", "James Wilson",
+            "Emily Davis", "Robert Kim", "Laura Martinez", "Thomas Nguyen", "Anna Brown",
+            "Chris Taylor", "Megan White", "Daniel Garcia", "Sophie Clark", "Andrew Lewis",
+            "Olivia Walker", "Ethan Young", "Chloe Adams", "Ryan Bell", "Zoe Carter"
+        ];
+
+        // Legal candidates: { name, proposedBy }
+        let legalCandidates = JSON.parse(localStorage.getItem('legalCandidates')) || [];
+
+        // Initialize data
+        let selectedVoters = new Array(voters.length).fill(false);
+
+        // Get DOM elements
+        const voterList = document.getElementById('voter-list');
+        const electedMemberSelect = document.getElementById('elected-member');
+        const legalCandidateList = document.getElementById('legal-candidate-list');
+        const totalSelectedDisplay = document.getElementById('total-selected');
+        const proposalBreakdown = document.getElementById('proposal-breakdown');
+        const newVoterInput = document.getElementById('new-voter');
+
+        // Save to localStorage
+        function saveToLocalStorage() {
+            localStorage.setItem('voters', JSON.stringify(voters));
+            localStorage.setItem('legalCandidates', JSON.stringify(legalCandidates));
+        }
+
+        // Populate elected members dropdown
+        function populateElectedMembers() {
+            electedMemberSelect.innerHTML = '<option value="">Select Elected Member</option>';
+            electedMembers.forEach(member => {
+                const option = document.createElement('option');
+                option.value = member;
+                option.textContent = member;
+                electedMemberSelect.appendChild(option);
+            });
+        }
+
+        // Render voter pool
+        function renderVoters() {
+            voterList.innerHTML = '';
+            voters.forEach((voter, index) => {
+                const voterDiv = document.createElement('div');
+                voterDiv.className = 'candidate';
+                voterDiv.innerHTML = `
+                    <h3>${voter}</h3>
+                    <input type="checkbox" id="voter-${index}" onchange="toggleVoterSelection(${index})" ${selectedVoters[index] ? 'checked' : ''}>
+                    <button class="delete-btn" onclick="deleteVoter(${index})">Delete</button>
+                `;
+                voterList.appendChild(voterDiv);
+            });
+        }
+
+        // Render legal candidates
+        function renderLegalCandidates() {
+            legalCandidateList.innerHTML = '';
+            legalCandidates.forEach((candidate, index) => {
+                const candidateDiv = document.createElement('div');
+                candidateDiv.className = 'candidate';
+                candidateDiv.innerHTML = `
+                    <h3>${candidate.name}</h3>
+                    <p>Proposed by: ${candidate.proposedBy}</p>
+                    <button class="delete-btn" onclick="deleteLegalCandidate(${index})">Remove</button>
+                `;
+                legalCandidateList.appendChild(candidateDiv);
+            });
+            totalSelectedDisplay.textContent = `Selected: ${legalCandidates.length}/133`;
+        }
+
+        // Render proposal breakdown
+        function renderProposalBreakdown() {
+            proposalBreakdown.innerHTML = '<h3>Proposals by Elected Member</h3>';
+            electedMembers.forEach(member => {
+                const count = legalCandidates.filter(c => c.proposedBy === member).length;
+                const p = document.createElement('p');
+                p.textContent = `${member}: ${count}`;
+                proposalBreakdown.appendChild(p);
+            });
+        }
+
+        // Toggle voter selection
+        function toggleVoterSelection(index) {
+            selectedVoters[index] = !selectedVoters[index];
+        }
+
+        // Add new voter
+        function addVoter() {
+            const name = newVoterInput.value.trim();
+            if (!name) {
+                alert('Please enter a voter name.');
+                return;
+            }
+            if (voters.includes(name)) {
+                alert('Voter already exists.');
+                return;
+            }
+            if (voters.length >= 799) {
+                alert('Cannot add more than 799 voters.');
+                return;
+            }
+            voters.push(name);
+            selectedVoter = new Array(voters.length).fill(false);
+            newVoterInput.value = '';
+            saveToLocalStorage();
+            renderVoters();
+            alert(`Voter "${name}" added.`);
+        }
+
+        // Delete voter
+        function deleteVoter(index) {
+            const name = voters[index];
+            if (legalCandidates.some(c => c.name === name)) {
+                alert('Cannot delete voter who is a legal candidate. Remove them from legal candidates first.');
+                return;
+            }
+            if (confirm(`Are you sure you want to delete "${name}"?`)) {
+                voters.splice(index, 1);
+                selectedVoters.splice(index, 1);
+                saveToLocalStorage();
+                renderVoters();
+                alert(`Voter "${name}" deleted.`);
+            }
+        }
+
+        // Propose legal candidates
+        function proposeLegalCandidates() {
+            const selectedMember = electedMemberSelect.value;
+            if (!selectedMember) {
+                alert('Please select an elected member.');
+                return;
+            }
+
+            const selectedCount = selectedVoters.filter(Boolean).length;
+            if (selectedCount === 0) {
+                alert('Please select at least one voter to propose.');
+                return;
+            }
+
+            const newLegalCount = legalCandidates.length + selectedCount;
+            if (newLegalCount > 133) {
+                alert(`Cannot exceed 133 legal candidates. Current: ${legalCandidates.length}, Proposed: ${selectedCount}.`);
+                return;
+            }
+
+            selectedVoters.forEach((selected, index) => {
+                if (selected) {
+                    legalCandidates.push({
+                        name: voters[index],
+                        proposedBy: selectedMember
+                    });
+                }
+            });
+
+            selectedVoters.fill(false);
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+
+            saveToLocalStorage();
+            renderVoters();
+            renderLegalCandidates();
+            renderProposalBreakdown();
+            alert(`Successfully proposed ${selectedCount} legal candidates by ${selectedMember}.`);
+        }
+
+        // Delete legal candidate
+        function deleteLegalCandidate(index) {
+            const name = legalCandidates[index].name;
+            if (confirm(`Are you sure you want to remove "${name}" from legal candidates?`)) {
+                legalCandidates.splice(index, 1);
+                saveToLocalStorage();
+                renderLegalCandidates();
+                renderProposalBreakdown();
+                alert(`Legal candidate "${name}" removed.`);
+            }
+        }
+
+        // Reset all data
+        function resetAll() {
+            if (confirm('Are you sure you want to reset all data? This cannot be undone.')) {
+                voters = [
+                    "John Doe", "Jane Roe", "Michael Chen", "Sarah Lee", "James Wilson",
+                    "Emily Davis", "Robert Kim", "Laura Martinez", "Thomas Nguyen", "Anna Brown",
+                    "Chris Taylor", "Megan White", "Daniel Garcia", "Sophie Clark", "Andrew Lewis",
+                    "Olivia Walker", "Ethan Young", "Chloe Adams", "Ryan Bell", "Zoe Carter"
+                ];
+                legalCandidates = [];
+                selectedVoters = new Array(voters.length).fill(false);
+                saveToLocalStorage();
+                renderVoters();
+                renderLegalCandidates();
+                renderProposalBreakdown();
+                alert('All data reset.');
+            }
+        }
+
+        // Initial render
+        populateElectedMembers();
+        renderVoters();
+        renderLegalCandidates();
+        renderProposalBreakdown();
+    </script>
+</body>
+</html>
